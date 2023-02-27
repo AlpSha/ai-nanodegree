@@ -73,8 +73,14 @@ def eliminate(values):
     dict
         The values dictionary with the assigned values eliminated from peers
     """
-    # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    orjValues = values
+    values = values.copy()
+    for box, value in orjValues.items():
+        if len(value) != 1:
+            continue
+        for peer in peers[box]:
+            values[peer] = values[peer].replace(value, '')
+    return values
 
 
 def only_choice(values):
@@ -97,8 +103,18 @@ def only_choice(values):
     -----
     You should be able to complete this function by copying your code from the classroom
     """
-    # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    values = values.copy()
+    for unit in unitlist:
+        for value in '123456789':
+            last_box_contains_the_num = None
+            value_counter_on_unit = 0
+            for box in unit:
+                if values[box].__contains__(value):
+                    value_counter_on_unit += 1
+                    last_box_contains_the_num = box
+            if value_counter_on_unit == 1:
+                values[last_box_contains_the_num] = value
+    return values
 
 
 def reduce_puzzle(values):
@@ -115,8 +131,16 @@ def reduce_puzzle(values):
         The values dictionary after continued application of the constraint strategies
         no longer produces any changes, or False if the puzzle is unsolvable 
     """
-    # TODO: Copy your code from the classroom and modify it to complete this function
-    raise NotImplementedError
+    stalled = False
+    while not stalled:
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
+        values = eliminate(values)
+        values = only_choice(values)
+        solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+        stalled = solved_values_before == solved_values_after
+        if len([box for box in values.keys() if len(values[box]) == 0]):
+            return False
+    return values
 
 
 def search(values):
@@ -138,8 +162,22 @@ def search(values):
     You should be able to complete this function by copying your code from the classroom
     and extending it to call the naked twins strategy.
     """
-    # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    values = values.copy()
+    values = reduce_puzzle(values)
+    if values is False:
+        return False
+    is_solved = len([box for box in values.keys() if len(values[box]) != 1]) == 0
+    if is_solved:
+        return values
+    boxes_and_lengths = {box: len(value) for box, value in values.items() if len(value) != 1}
+    chosen_box = min(boxes_and_lengths, key=boxes_and_lengths.get)
+    possible_values_of_box = values[chosen_box]
+    for value in possible_values_of_box:
+        values[chosen_box] = value
+        result = search(values)
+        if result:
+            return result
+    return False
 
 
 def solve(grid):
