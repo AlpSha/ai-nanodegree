@@ -170,9 +170,9 @@ def search(values):
     possible_values_of_box = values[chosen_box]
     for value in possible_values_of_box:
         values[chosen_box] = value
-        result = search(values)
-        if result:
-            return result
+        search_result = search(values)
+        if search_result:
+            return search_result
     return False
 
 
