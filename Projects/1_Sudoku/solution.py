@@ -75,7 +75,7 @@ def eliminate(values):
         if len(value) != 1:
             continue
         for peer in peers[box]:
-            values[peer] = values[peer].replace(value, '')
+            assign_value(values, peer, values[peer].replace(value, ''))
     return values
 
 
@@ -109,7 +109,7 @@ def only_choice(values):
                     value_counter_on_unit += 1
                     last_box_contains_the_num = box
             if value_counter_on_unit == 1:
-                values[last_box_contains_the_num] = value
+                assign_value(values, last_box_contains_the_num, value)
     return values
 
 
