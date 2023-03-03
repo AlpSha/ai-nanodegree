@@ -185,7 +185,7 @@ def search(values):
     chosen_box = min(boxes_and_lengths, key=boxes_and_lengths.get)
     possible_values_of_box = values[chosen_box]
     for value in possible_values_of_box:
-        values[chosen_box] = value
+        assign_value(values, chosen_box, value)
         search_result = search(values)
         if search_result:
             return search_result
