@@ -49,8 +49,23 @@ def naked_twins(values):
     Pseudocode for this algorithm on github:
     https://github.com/udacity/artificial-intelligence/blob/master/Projects/1_Sudoku/pseudocode.md
     """
-    # TODO: Implement this function!
-    raise NotImplementedError
+    values = values.copy()
+    for boxA in values.keys():
+        for boxB in peers[boxA]:
+            valueA = values[boxA]
+            valueB = values[boxB]
+            if len(valueA) != 2 or len(valueB) != 2:
+                continue
+            if all(value in valueA for value in valueB):
+                intersectionOfPeers = intersection(peers[boxA], peers[boxB])
+                for peer in intersectionOfPeers:
+                    for value in values[boxA]:
+                        assign_value(values, peer, values[peer].replace(value, ''))
+    return values
+
+
+def intersection(list1, list2):
+    return [item for item in list1 if item in list2]
 
 
 def eliminate(values):
@@ -132,6 +147,7 @@ def reduce_puzzle(values):
         solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
         values = eliminate(values)
         values = only_choice(values)
+        values = naked_twins(values)
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
         stalled = solved_values_before == solved_values_after
         if len([box for box in values.keys() if len(values[box]) == 0]):
