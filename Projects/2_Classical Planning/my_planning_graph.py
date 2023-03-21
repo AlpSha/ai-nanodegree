@@ -1,4 +1,3 @@
-
 from itertools import chain, combinations
 from aimacode.planning import Action
 from aimacode.utils import expr
@@ -19,9 +18,21 @@ class ActionLayer(BaseActionLayer):
         --------
         layers.ActionNode
         """
-        # TODO: implement this function
-        raise NotImplementedError
+        effects_A = self.children.get(actionA)
+        effects_B = self.children.get(actionB)
 
+        if not (effects_A or effects_B):
+            return False
+
+        for effect_A in effects_A:
+            if ~effect_A in effects_B:
+                return True
+
+        for effect_B in effects_B:
+            if ~effect_B in effects_A:
+                return True
+
+        return False
 
     def _interference(self, actionA, actionB):
         """ Return True if the effects of either action negate the preconditions of the other 
@@ -34,8 +45,29 @@ class ActionLayer(BaseActionLayer):
         --------
         layers.ActionNode
         """
-        # TODO: implement this function
-        raise NotImplementedError
+        effects_A = self.children.get(actionA)
+        effects_B = self.children.get(actionB)
+        pre_As = self.parents.get(actionA)
+        pre_Bs = self.parents.get(actionB)
+
+        if not (effects_A or effects_B):
+            return False
+
+        if not pre_Bs:
+            return False
+
+        for effect_A in effects_A:
+            if ~effect_A in pre_Bs:
+                return True
+
+        if not pre_As:
+            return False
+
+        for effect_B in effects_B:
+            if ~effect_B in pre_As:
+                return True
+
+        return False
 
     def _competing_needs(self, actionA, actionB):
         """ Return True if any preconditions of the two actions are pairwise mutex in the parent layer
@@ -49,8 +81,15 @@ class ActionLayer(BaseActionLayer):
         layers.ActionNode
         layers.BaseLayer.parent_layer
         """
-        # TODO: implement this function
-        raise NotImplementedError
+        pre_As = self.parents.get(actionA)
+        pre_Bs = self.parents.get(actionB)
+
+        for pre_A in pre_As:
+            for pre_B in pre_Bs:
+                if self.parent_layer.is_mutex(pre_A, pre_B):
+                    return True
+
+        return False
 
 
 class LiteralLayer(BaseLiteralLayer):
@@ -66,13 +105,16 @@ class LiteralLayer(BaseLiteralLayer):
         --------
         layers.BaseLayer.parent_layer
         """
-        # TODO: implement this function
-        raise NotImplementedError
+        actions = list(self.parents.get(literalA).union(self.parents.get(literalB)))
+        for i in range(len(actions) - 1):
+            for j in range(i + 1, len(actions)):
+                if not self.parent_layer.is_mutex(actions[i], actions[j]):
+                    return False
+        return True
 
     def _negation(self, literalA, literalB):
         """ Return True if two literals are negations of each other """
-        # TODO: implement this function
-        raise NotImplementedError
+        return literalA == ~literalB
 
 
 class PlanningGraph:
@@ -101,7 +143,7 @@ class PlanningGraph:
         # make no-op actions that persist every literal to the next layer
         no_ops = [make_node(n, no_op=True) for n in chain(*(makeNoOp(s) for s in problem.state_map))]
         self._actionNodes = no_ops + [make_node(a) for a in problem.actions_list]
-        
+
         # initialize the planning graph by finding the literals that are in the
         # first layer and finding the actions they they should be connected to
         literals = [s if f else ~s for f, s in zip(state, problem.state_map)]
