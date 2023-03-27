@@ -18,11 +18,8 @@ class ActionLayer(BaseActionLayer):
         --------
         layers.ActionNode
         """
-        effects_A = self.children.get(actionA)
-        effects_B = self.children.get(actionB)
-
-        if not (effects_A or effects_B):
-            return False
+        effects_A = self.children.get(actionA, [])
+        effects_B = self.children.get(actionB, [])
 
         for effect_A in effects_A:
             if ~effect_A in effects_B:
@@ -45,23 +42,14 @@ class ActionLayer(BaseActionLayer):
         --------
         layers.ActionNode
         """
-        effects_A = self.children.get(actionA)
-        effects_B = self.children.get(actionB)
-        pre_As = self.parents.get(actionA)
-        pre_Bs = self.parents.get(actionB)
-
-        if not (effects_A or effects_B):
-            return False
-
-        if not pre_Bs:
-            return False
+        effects_A = self.children.get(actionA, [])
+        effects_B = self.children.get(actionB, [])
+        pre_As = self.parents.get(actionA, [])
+        pre_Bs = self.parents.get(actionB, [])
 
         for effect_A in effects_A:
             if ~effect_A in pre_Bs:
                 return True
-
-        if not pre_As:
-            return False
 
         for effect_B in effects_B:
             if ~effect_B in pre_As:
@@ -81,8 +69,8 @@ class ActionLayer(BaseActionLayer):
         layers.ActionNode
         layers.BaseLayer.parent_layer
         """
-        pre_As = self.parents.get(actionA)
-        pre_Bs = self.parents.get(actionB)
+        pre_As = self.parents.get(actionA, [])
+        pre_Bs = self.parents.get(actionB, [])
 
         for pre_A in pre_As:
             for pre_B in pre_Bs:
@@ -105,11 +93,14 @@ class LiteralLayer(BaseLiteralLayer):
         --------
         layers.BaseLayer.parent_layer
         """
-        actions = list(self.parents.get(literalA).union(self.parents.get(literalB)))
-        for i in range(len(actions) - 1):
-            for j in range(i + 1, len(actions)):
-                if not self.parent_layer.is_mutex(actions[i], actions[j]):
+        actions_A = self.parents.get(literalA, [])
+        actions_B = self.parents.get(literalB, [])
+
+        for action_A in actions_A:
+            for action_B in actions_B:
+                if not self.parent_layer.is_mutex(action_A, action_B):
                     return False
+
         return True
 
     def _negation(self, literalA, literalB):
