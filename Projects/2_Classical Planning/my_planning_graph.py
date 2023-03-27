@@ -143,6 +143,11 @@ class PlanningGraph:
         self.literal_layers = [layer]
         self.action_layers = []
 
+    def level_cost(self, goal):
+        for i, layer in enumerate(self.literal_layers):
+            if goal in layer:
+                return i
+
     def h_levelsum(self):
         """ Calculate the level sum heuristic for the planning graph
 
@@ -168,8 +173,18 @@ class PlanningGraph:
         --------
         Russell-Norvig 10.3.1 (3rd Edition)
         """
-        # TODO: implement this function
-        raise NotImplementedError
+        level_sum = 0
+        for goal in self.goal:
+            while True:
+                level = self.level_cost(goal)
+                if level is not None:
+                    break
+                if self._is_leveled:
+                    break
+                self._extend()
+            level_sum += level
+        return level_sum
+
 
     def h_maxlevel(self):
         """ Calculate the max level heuristic for the planning graph
@@ -198,8 +213,18 @@ class PlanningGraph:
         -----
         WARNING: you should expect long runtimes using this heuristic with A*
         """
-        # TODO: implement maxlevel heuristic
-        raise NotImplementedError
+        max_level = 0
+        for goal in self.goal:
+            while True:
+                level = self.level_cost(goal)
+                if level is not None:
+                    break
+                if self._is_leveled:
+                    break
+                self._extend()
+            if level > max_level:
+                max_level = level
+        return max_level
 
     def h_setlevel(self):
         """ Calculate the set level heuristic for the planning graph
@@ -223,8 +248,27 @@ class PlanningGraph:
         -----
         WARNING: you should expect long runtimes using this heuristic on complex problems
         """
-        # TODO: implement setlevel heuristic
-        raise NotImplementedError
+        level = 0
+        while True:
+            layer = self.literal_layers[level]
+            all_goals_met = True
+            for goal in self.goal:
+                if goal not in layer:
+                    all_goals_met = False
+            if all_goals_met:
+                goals_are_mutex = False
+                for goalA in self.goal:
+                    for goalB in self.goal:
+                        if layer.is_mutex(goalA, goalB):
+                            goals_are_mutex = True
+                if not goals_are_mutex:
+                    return level
+            if self._is_leveled and level >= len(self.literal_layers) - 1:
+                return None
+            if not self._is_leveled and level >= len(self.literal_layers) - 1:
+                self._extend()
+            level += 1
+
 
     ##############################################################################
     #                     DO NOT MODIFY CODE BELOW THIS LINE                     #
